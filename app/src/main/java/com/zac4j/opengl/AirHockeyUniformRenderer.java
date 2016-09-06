@@ -45,11 +45,11 @@ public class AirHockeyUniformRenderer implements GLSurfaceView.Renderer {
   // 变量 vertexData 用于保存 native 内存中的数据
   private final FloatBuffer vertexData;
 
-  // 获取并保存 uniform location
+  // 提取 uniform color location key
   private static final String U_COLOR = "u_Color";
   private int uColorLocation;
 
-  // 获取并保存 attribute location
+  // 提取 position location 属性 key
   private static final String A_POSITION = "a_Position";
 
   public AirHockeyUniformRenderer(Context context) {
