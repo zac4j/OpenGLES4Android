@@ -12,25 +12,24 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import static android.opengl.GLES20.GL_FLOAT;
-import static android.opengl.GLES20.GL_POINTS;
-import static android.opengl.GLES20.GL_TRIANGLES;
+import static android.opengl.GLES20.GL_COLOR_BUFFER_BIT;
 import static android.opengl.GLES20.GL_LINES;
+import static android.opengl.GLES20.GL_POINTS;
+import static android.opengl.GLES20.GL_TRIANGLE_FAN;
 import static android.opengl.GLES20.glClear;
 import static android.opengl.GLES20.glClearColor;
 import static android.opengl.GLES20.glDrawArrays;
 import static android.opengl.GLES20.glEnableVertexAttribArray;
 import static android.opengl.GLES20.glGetAttribLocation;
-import static android.opengl.GLES20.glGetUniformLocation;
-import static android.opengl.GLES20.glUniform4f;
 import static android.opengl.GLES20.glUseProgram;
 import static android.opengl.GLES20.glVertexAttribPointer;
 import static android.opengl.GLES20.glViewport;
 
 /**
- * OpenGL ES Renderer
- * Created by zac on 16-9-4.
+ * Arrays with color
+ * Created by zac on 16-9-6.
  */
-public class AirHockeyRenderer implements GLSurfaceView.Renderer {
+public class AirHockeyVaryRender implements GLSurfaceView.Renderer {
 
   private final Context mContext;
 
@@ -45,39 +44,32 @@ public class AirHockeyRenderer implements GLSurfaceView.Renderer {
   // 变量 vertexData 用于保存 native 内存中的数据
   private final FloatBuffer vertexData;
 
-  // 连接 Shader 后的 Program 对象的 Id
-  private int program;
-
-  // 获取并保存 uniform location
-  private static final String U_COLOR = "u_Color";
-  private int uColorLocation;
+  // 获取并保存 vary color location
+  private static final String A_COLOR = "a_Color";
+  // 每种颜色用3个浮点数表示，在vertex shader中定义vec4有四个参数，没有定义的话，默认前三个为0,最后一个为1.
+  private static final int COLOR_COMPONENT_COUNT = 3;
+  // 步长包括坐标的2个值以及颜色的3个值
+  private static final int STRIDE =
+      (POSITION_COMPONENT_COUNT + COLOR_COMPONENT_COUNT) * BYTES_PER_FLOAT;
 
   // 获取并保存 attribute location
   private static final String A_POSITION = "a_Position";
-  private int aPositionLocation;
 
-  public AirHockeyRenderer(Context context) {
-
+  public AirHockeyVaryRender(Context context) {
     mContext = context;
 
-    // vertex attribute array
-    float[] tableVertices = {
-        0f, 0f, 0f, 14f, 9f, 14f, 9f, 0f
-    };
-
-    // we can divide rectangle into two triangle
     float[] tableVerticesWithTriangles = {
-        // Triangle 1
-        -0.5f, -0.5f, 0.5f, 0.5f, -0.5f, 0.5f,
+        // Order of coordinates: X, Y, R, G, B
 
-        // Triangle 2
-        -0.5f, -0.5f, 0.5f, -0.5f, 0.5f, 0.5f,
+        // Triangle Fan, add three additional numbers to each vertex, these numbers represent color.
+        0f, 0f, 1f, 1f, 1f, -0.5f, -0.5f, 0.7f, 0.7f, 0.7f, 0.5f, -0.5f, 0.7f, 0.7f, 0.7f, 0.5f,
+        0.5f, 0.7f, 0.7f, 0.7f, -0.5f, 0.5f, 0.7f, 0.7f, 0.7f, -0.5f, -0.5f, 0.7f, 0.7f, 0.7f,
 
         // Line 1
-        -0.5f, 0f, 0.5f, 0f,
+        -0.5f, 0f, 1f, 0f, 0f, 0.5f, 0f, 1f, 0f, 0f,
 
-        // Mallets
-        0f, -0.25f, 0f, 0.25f
+        // Mallets, 2 points
+        0f, -0.25f, 0f, 0f, 1f, 0f, 0.25f, 1f, 0f, 0f
     };
 
     // 在 native 空间创建内存并将Java 堆上的数据拷贝到 native 内存中
@@ -92,32 +84,39 @@ public class AirHockeyRenderer implements GLSurfaceView.Renderer {
     // the arguments correspond to red, green, blue and alpha.
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     String vertexShaderSource =
-        TextResourceReader.readTextFileFromResource(mContext, R.raw.simple_vertex_shader);
+        TextResourceReader.readTextFileFromResource(mContext, R.raw.vary_vertex_shader);
     String fragmentShaderSource =
-        TextResourceReader.readTextFileFromResource(mContext, R.raw.simple_fragment_shader);
+        TextResourceReader.readTextFileFromResource(mContext, R.raw.vary_fragment_shader);
     int vertexShader = ShaderHelper.compileVertexShader(vertexShaderSource);
     int fragmentShader = ShaderHelper.compileFragmentShader(fragmentShaderSource);
 
-    program = ShaderHelper.linkProgram(vertexShader, fragmentShader);
+    // 连接后的 OpenGL program 对象引用
+    int program = ShaderHelper.linkProgram(vertexShader, fragmentShader);
 
     if (LoggerConfig.ON) {
       ShaderHelper.validateProgram(program);
     }
 
-    // OpenGL 使用 program 在屏幕上绘制图形
+    // 使用此 OpenGL program 在屏幕上绘制图形
     glUseProgram(program);
 
-    // 保存 uniform location
-    uColorLocation = glGetUniformLocation(program, U_COLOR);
+    // 保存 attribute position location
+    int aPositionLocation = glGetAttribLocation(program, A_POSITION);
 
-    // 保存 attribute location
-    aPositionLocation = glGetAttribLocation(program, A_POSITION);
+    // 保存 attribute color location
+    int aColorLocation = glGetAttribLocation(program, A_COLOR);
 
-    // OpenGL 从 buffer 初始位置开始读取数据到 a_Position
+    // OpenGL 从 buffer 初始位置开始读取 position 数据
     vertexData.position(0);
-    glVertexAttribPointer(aPositionLocation, POSITION_COMPONENT_COUNT, GL_FLOAT, false, 0,
+    glVertexAttribPointer(aPositionLocation, POSITION_COMPONENT_COUNT, GL_FLOAT, false, STRIDE,
         vertexData);
     glEnableVertexAttribArray(aPositionLocation);
+
+    // OpenGL 从 buffer 初始位置开始读取 color 数据
+    vertexData.position(POSITION_COMPONENT_COUNT);
+    glVertexAttribPointer(aColorLocation, COLOR_COMPONENT_COUNT, GL_FLOAT, false, STRIDE,
+        vertexData);
+    glEnableVertexAttribArray(aColorLocation);
   }
 
   @Override public void onSurfaceChanged(GL10 gl10, int i, int i1) {
@@ -126,25 +125,15 @@ public class AirHockeyRenderer implements GLSurfaceView.Renderer {
   }
 
   @Override public void onDrawFrame(GL10 gl10) {
-    // This will wipe out all colors on the screen and fill the screen with the color
-    // previously defined by our call to glClearColor()
-    glClear(GL10.GL_COLOR_BUFFER_BIT);
+    // Clear the rendering surface.
+    glClear(GL_COLOR_BUFFER_BIT);
 
-    // 初始化 uniform 数据，不同于 attribute， uniform 没有初始值。
-    glUniform4f(uColorLocation, 1.0f, 1.0f, 1.0f, 1.0f);
-    // 绘制三角形，从数组0位开始，有两个三角行共6个 vertex.
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 6);
 
-    glUniform4f(uColorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
-    // 绘制分割线，从数组6位开始，共2个vertex
     glDrawArrays(GL_LINES, 6, 2);
 
-    // 绘制蓝槌
-    glUniform4f(uColorLocation, 0.0f, 0.0f, 1.0f, 1.0f);
     glDrawArrays(GL_POINTS, 8, 1);
 
-    // 绘制红槌
-    glUniform4f(uColorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
     glDrawArrays(GL_POINTS, 9, 1);
   }
 }

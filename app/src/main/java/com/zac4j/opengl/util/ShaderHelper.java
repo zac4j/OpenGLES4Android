@@ -121,6 +121,7 @@ public class ShaderHelper {
     glAttachShader(programObjectId, vertexShaderId);
     glAttachShader(programObjectId, fragmentShaderId);
 
+    // 连接 shader 与 program 对象
     glLinkProgram(programObjectId);
 
     // 检测连接状态，并保存到长度为1的 linkStatus 数组中
