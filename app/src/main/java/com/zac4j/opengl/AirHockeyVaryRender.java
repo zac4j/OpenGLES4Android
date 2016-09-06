@@ -26,7 +26,7 @@ import static android.opengl.GLES20.glVertexAttribPointer;
 import static android.opengl.GLES20.glViewport;
 
 /**
- * Arrays with color
+ * Vertex arrays with position and color
  * Created by zac on 16-9-6.
  */
 public class AirHockeyVaryRender implements GLSurfaceView.Renderer {
