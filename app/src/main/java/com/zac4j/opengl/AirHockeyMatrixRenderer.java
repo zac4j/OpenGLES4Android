@@ -22,7 +22,6 @@ import static android.opengl.GLES20.glDrawArrays;
 import static android.opengl.GLES20.glEnableVertexAttribArray;
 import static android.opengl.GLES20.glGetAttribLocation;
 import static android.opengl.GLES20.glGetUniformLocation;
-import static android.opengl.GLES20.glUniform4fv;
 import static android.opengl.GLES20.glUniformMatrix4fv;
 import static android.opengl.GLES20.glUseProgram;
 import static android.opengl.GLES20.glVertexAttribPointer;
@@ -33,7 +32,7 @@ import static android.opengl.Matrix.orthoM;
  * Vertex arrays with position and color
  * Created by zac on 16-9-6.
  */
-public class AirHockeyMatrixRender implements GLSurfaceView.Renderer {
+public class AirHockeyMatrixRenderer implements GLSurfaceView.Renderer {
 
   private final Context mContext;
 
@@ -69,7 +68,7 @@ public class AirHockeyMatrixRender implements GLSurfaceView.Renderer {
 
   private int uMatrixLocation;
 
-  public AirHockeyMatrixRender(Context context) {
+  public AirHockeyMatrixRenderer(Context context) {
     mContext = context;
 
     float[] tableVerticesWithTriangles = {
