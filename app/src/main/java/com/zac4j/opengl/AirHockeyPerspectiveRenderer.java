@@ -152,7 +152,7 @@ public class AirHockeyPerspectiveRenderer implements GLSurfaceView.Renderer {
 
     // 需要设置 triangle 各坐标z轴的值，这里可以使用平移矩阵的算法
     setIdentityM(modelMatrix, 0);
-    // 设置z轴的平移量为-2
+    // 设置z轴的平移量为-2.5
     translateM(modelMatrix, 0, 0f, 0f, -2.5f);
     // 设置沿x轴顺时针旋转60度
     rotateM(modelMatrix, 0, -60f, 1f, 0f, 0f);
@@ -161,8 +161,6 @@ public class AirHockeyPerspectiveRenderer implements GLSurfaceView.Renderer {
     multiplyMM(temp, 0, projectionMatrix, 0, modelMatrix, 0);
     // 最后将转换后的结果保存到 projectionMatrix 中
     System.arraycopy(temp, 0, projectionMatrix, 0, temp.length);
-
-
   }
 
   @Override public void onDrawFrame(GL10 gl10) {

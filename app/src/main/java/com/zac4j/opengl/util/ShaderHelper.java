@@ -78,7 +78,7 @@ public class ShaderHelper {
     final int[] compileStatus = new int[1];
     glGetShaderiv(shaderObjectId, GL_COMPILE_STATUS, compileStatus, 0);
 
-    // 获取 shader 的 log 信息
+    // a good practice: --> 获取 shader 的 log 信息
     if (LoggerConfig.ON) {
       Log.v(TAG, "Results of compiling source: " + "\n" + shaderCode + "\n:" + glGetShaderInfoLog(
           shaderObjectId));
@@ -146,9 +146,10 @@ public class ShaderHelper {
   }
 
   /**
-   * 验证 Program 是否生效
+   * 验证 Program 是否有效
+   *
    * @param programObjectId program 对象 id
-   * @return 验证成功返回 true， 否则 false
+   * @return 有效返回 true， 否则返回 false
    */
   public static boolean validateProgram(int programObjectId) {
     glValidateProgram(programObjectId);
@@ -159,5 +160,28 @@ public class ShaderHelper {
         "\nLog: " + glGetProgramInfoLog(programObjectId));
 
     return validateStatus[0] != 0;
+  }
+
+  /**
+   * 构造 OpenGL Program对象
+   * @param vertexShaderSource 顶点 Shader 资源
+   * @param fragmentShaderSource 区块 Shader 资源
+   * @return 连接顶点和区块 Shader 后的 Program 对象的引用
+   */
+  public static int buildProgram(String vertexShaderSource, String fragmentShaderSource) {
+    int program;
+
+    // 编译Shader
+    int vertexShader = compileVertexShader(vertexShaderSource);
+    int fragmentShader = compileFragmentShader(fragmentShaderSource);
+
+    // 连接 Shader 到 Program
+    program = linkProgram(vertexShader, fragmentShader);
+
+    if (LoggerConfig.ON) {
+      validateProgram(program);
+    }
+
+    return program;
   }
 }
