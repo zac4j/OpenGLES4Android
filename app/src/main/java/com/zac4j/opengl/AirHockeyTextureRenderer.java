@@ -2,7 +2,7 @@ package com.zac4j.opengl;
 
 import android.content.Context;
 import android.opengl.GLSurfaceView;
-import com.zac4j.opengl.object.Mallet;
+import com.zac4j.opengl.object.OldMallet;
 import com.zac4j.opengl.object.Table;
 import com.zac4j.opengl.program.ColorShaderProgram;
 import com.zac4j.opengl.program.TextureShaderProgram;
@@ -35,7 +35,7 @@ public class AirHockeyTextureRenderer implements GLSurfaceView.Renderer {
   private final float[] mModelMatrix = new float[16];
 
   private Table mTable;
-  private Mallet mMallet;
+  private OldMallet mMallet;
 
   private TextureShaderProgram mTextureProgram;
   private ColorShaderProgram mColorProgram;
@@ -50,7 +50,7 @@ public class AirHockeyTextureRenderer implements GLSurfaceView.Renderer {
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
     mTable = new Table();
-    mMallet = new Mallet();
+    mMallet = new OldMallet();
 
     mTextureProgram = new TextureShaderProgram(mContext);
     mColorProgram = new ColorShaderProgram(mContext);

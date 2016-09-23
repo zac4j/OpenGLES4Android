@@ -5,6 +5,7 @@ import com.zac4j.opengl.R;
 
 import static android.opengl.GLES20.glGetAttribLocation;
 import static android.opengl.GLES20.glGetUniformLocation;
+import static android.opengl.GLES20.glUniform4f;
 import static android.opengl.GLES20.glUniformMatrix4fv;
 
 /**
@@ -15,6 +16,7 @@ public class ColorShaderProgram extends ShaderProgram {
 
   // Uniform locations
   private final int uMatrixLocation;
+  private final int uColorLocation;
 
   // Attribute locations
   private final int aPositionLocation;
@@ -25,6 +27,7 @@ public class ColorShaderProgram extends ShaderProgram {
 
     // 获取 shader program 的 uniform location
     uMatrixLocation = glGetUniformLocation(program, U_MATRIX);
+    uColorLocation = glGetUniformLocation(program, U_COLOR);
 
     // 获取 shader program 的 attribute location
     aPositionLocation = glGetAttribLocation(program, A_POSITION);
@@ -33,6 +36,17 @@ public class ColorShaderProgram extends ShaderProgram {
 
   /**
    * 向 shader program 传递转换矩阵
+   *
+   * @param matrix 转换矩阵
+   */
+  public void setUniforms(float[] matrix, float r, float g, float b) {
+    glUniformMatrix4fv(uMatrixLocation, 1, false, matrix, 0);
+    glUniform4f(uColorLocation, r, g, b, 1f);
+  }
+
+  /**
+   * 向 shader program 传递转换矩阵
+   *
    * @param matrix 转换矩阵
    */
   public void setUniform(float[] matrix) {
@@ -41,6 +55,7 @@ public class ColorShaderProgram extends ShaderProgram {
 
   /**
    * 获取位置属性 location
+   *
    * @return 位置属性 location
    */
   public int getPositionAttributeLocation() {
@@ -49,12 +64,10 @@ public class ColorShaderProgram extends ShaderProgram {
 
   /**
    * 获取色彩属性 location
+   *
    * @return 色彩属性 location
    */
   public int getColorAttributeLocation() {
     return aColorLocation;
   }
-
-
-
 }

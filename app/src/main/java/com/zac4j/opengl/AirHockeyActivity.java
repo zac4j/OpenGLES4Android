@@ -3,8 +3,10 @@ package com.zac4j.opengl;
 import android.app.ActivityManager;
 import android.content.pm.ConfigurationInfo;
 import android.opengl.GLSurfaceView;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.view.MotionEvent;
+import android.view.View;
 import android.widget.Toast;
 
 public class AirHockeyActivity extends AppCompatActivity {
@@ -25,15 +27,43 @@ public class AirHockeyActivity extends AppCompatActivity {
 
     final ConfigurationInfo configInfo = activityManager.getDeviceConfigurationInfo();
 
-    final boolean supportEs3 = configInfo.reqGlEsVersion >= 0x20000;
+    final boolean supportEs2 = configInfo.reqGlEsVersion >= 0x20000;
 
-    if (supportEs3) {
+    if (supportEs2) {
       // Request an OpenGL ES 2.0 compatible context.
       mGLSurfaceView.setEGLContextClientVersion(2);
 
       // Assign renderer. 设置渲染器
-      mGLSurfaceView.setRenderer(new AirHockeyTextureRenderer(this));
+      final AirHockeyCylinderRenderer renderer = new AirHockeyCylinderRenderer(this);
+
+      mGLSurfaceView.setRenderer(renderer);
       mRendererSet = true;
+
+      mGLSurfaceView.setOnTouchListener(new View.OnTouchListener() {
+        @Override public boolean onTouch(View v, MotionEvent event) {
+          // 将Android 屏幕坐标转换为标准坐标
+          if (event != null) {
+            final float normalizedX = (event.getX() / (float) v.getWidth()) * 2 - 1;
+            final float normalizedY = -((event.getY() / (float) v.getHeight()) * 2 - 1);
+
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+              mGLSurfaceView.queueEvent(new Runnable() {
+                @Override public void run() {
+                  renderer.onClick(normalizedX, normalizedY);
+                }
+              });
+            } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
+              mGLSurfaceView.queueEvent(new Runnable() {
+                @Override public void run() {
+                  renderer.onDrag(normalizedX, normalizedY);
+                }
+              });
+            }
+            return true;
+          }
+          return false;
+        }
+      });
     } else {
       Toast.makeText(AirHockeyActivity.this, "This device does not support OpenGL ES 2.0",
           Toast.LENGTH_SHORT).show();
